@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TicketIn.db — A Velvet Room for Films</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="masthead">
+        <a class="brand" href="#" data-action="home">
+            <span class="brand-mark"></span>
+            <span class="brand-name">TicketIn<span class="brand-dot">.</span>db</span>
+        </a>
+        <div class="masthead-meta">
+            <span class="user-pill" id="user-pill">
+                <span class="user-pill-label">GUEST</span>
+                <span class="user-pill-id" id="user-id">— —</span>
+            </span>
+        </div>
+    </header>
+
+    <main>
+        <!-- ============ VIEW: MOVIE GRID ============ -->
+        <section class="view view-movies is-active" id="view-movies">
+            <div class="hero">
+                <p class="kicker">// EST. 2025 · NOW SHOWING</p>
+                <h1 class="hero-title">
+                    <span class="hero-title-line">A hundred films,</span>
+                    <span class="hero-title-line hero-title-italic">one velvet room.</span>
+                </h1>
+                <p class="hero-lede">
+                    Reserve a seat in a quiet city cinema. Fictional listings, real reservations.
+                </p>
+                <div class="hero-stats" id="hero-stats">
+                    <div class="stat">
+                        <span class="stat-num" id="stat-films">—</span>
+                        <span class="stat-label">FILMS</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <span class="stat-num" id="stat-genres">—</span>
+                        <span class="stat-label">GENRES</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <span class="stat-num">14</span>
+                        <span class="stat-label">DAYS AHEAD</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <span class="filter-label">FILTER</span>
+                <div class="filter-chips" id="filter-chips">
+                    <button class="chip is-active" data-genre="">ALL</button>
+                </div>
+            </div>
+
+            <div class="movies-grid" id="movies-grid">
+                <div class="loading-state">
+                    <span class="loading-dots">LOADING<span></span><span></span><span></span></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ VIEW: SHOWTIMES ============ -->
+        <section class="view view-showtimes" id="view-showtimes">
+            <button class="back-link" data-action="home">
+                <span class="back-arrow">←</span> ALL FILMS
+            </button>
+
+            <div class="movie-detail" id="movie-detail"></div>
+
+            <div class="section-rule">
+                <span class="section-rule-label">SCREENINGS</span>
+            </div>
+
+            <div class="showtimes-list" id="showtimes-list">
+                <div class="loading-state">
+                    <span class="loading-dots">LOADING<span></span><span></span><span></span></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ VIEW: SEAT MAP ============ -->
+        <section class="view view-seats" id="view-seats">
+            <button class="back-link" data-action="back-to-showtimes">
+                <span class="back-arrow">←</span> SHOWTIMES
+            </button>
+
+            <div class="showtime-info" id="showtime-info"></div>
+
+            <div class="theater">
+                <div class="screen">
+                    <div class="screen-glow"></div>
+                    <div class="screen-line"></div>
+                    <p class="screen-label">SCREEN</p>
+                </div>
+                <div class="seats-container" id="seats-container"></div>
+                <div class="seat-legend">
+                    <span class="legend-item"><span class="legend-swatch swatch-available"></span>AVAILABLE</span>
+                    <span class="legend-item"><span class="legend-swatch swatch-selected"></span>SELECTED</span>
+                    <span class="legend-item"><span class="legend-swatch swatch-taken"></span>TAKEN</span>
+                </div>
+            </div>
+
+            <div class="book-bar">
+                <div class="book-summary" id="book-summary">
+                    <span class="book-summary-empty">SELECT A SEAT TO CONTINUE</span>
+                </div>
+                <button class="cta-book" id="cta-book" disabled>
+                    RESERVE
+                    <span class="cta-arrow">→</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ============ VIEW: CONFIRMATION ============ -->
+        <section class="view view-confirm" id="view-confirm">
+            <div class="ticket-stub" id="ticket-stub"></div>
+            <div class="confirm-actions">
+                <button class="btn-secondary" data-action="home">BOOK ANOTHER FILM</button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="colophon">
+        <span class="colophon-line">TICKETIN.DB</span>
+        <span class="colophon-dot">·</span>
+        <span class="colophon-line">A booking experiment</span>
+        <span class="colophon-dot">·</span>
+        <span class="colophon-line">Built on Express, MongoDB &amp; Redis</span>
+    </footer>
+
+    <!-- ============ MODAL: USERNAME + CONFIRM ============ -->
+    <div class="modal" id="modal" aria-hidden="true">
+        <div class="modal-backdrop" data-action="close-modal"></div>
+        <div class="modal-card">
+            <p class="modal-kicker">// CONFIRM RESERVATION</p>
+            <h2 class="modal-title" id="modal-title">Hold this seat?</h2>
+            <p class="modal-subtitle" id="modal-subtitle"></p>
+
+            <label class="modal-field">
+                <span class="modal-field-label">YOUR NAME / HANDLE</span>
+                <input
+                    type="text"
+                    id="modal-input"
+                    class="modal-input"
+                    placeholder="e.g. arsyam"
+                    autocomplete="off"
+                    spellcheck="false"
+                />
+                <span class="modal-field-hint">Used as your booking ID. Stored locally only.</span>
+            </label>
+
+            <div class="modal-actions">
+                <button class="btn-ghost" data-action="close-modal">CANCEL</button>
+                <button class="btn-primary" id="modal-confirm">
+                    CONFIRM &amp; PAY
+                    <span class="cta-arrow">→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TOAST ============ -->
+    <div class="toast" id="toast" aria-hidden="true"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

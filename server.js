@@ -6,6 +6,7 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+app.use(express.static('public'));
 
 // Connect to MongoDB
 mongoose.connect('mongodb://127.0.0.1:27017/ticketin_db')
@@ -19,11 +20,6 @@ const redis = new Redis({
 });
 redis.on('connect', () => console.log('Successfully connected to Redis (In-Memory Lock)'));
 redis.on('error', (err) => console.error('Failed to connect to Redis:', err));
-
-// Basic route to test the server
-app.get('/', (req, res) => {
-    res.send('TicketIn.db Booking API is running!');
-});
 
 // Import and Use Routes
 const bookingRoutes = require('./routes/booking');
