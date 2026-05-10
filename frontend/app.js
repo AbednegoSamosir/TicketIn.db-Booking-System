@@ -4,23 +4,29 @@
 
 const API = {
     movies: '/api/movies',
+    cinemas: '/api/cinemas',
     showtimes: (id) => `/api/showtimes/${id}`,
     seats: (id) => `/api/showtimes/${id}/seats`,
-    book: '/api/bookings/request-seat',
+    lockSeats: '/api/bookings/lock-seats',
+    confirmPayment: '/api/bookings/confirm-payment',
+    cancelLock: '/api/bookings/cancel-lock',
     tickets: () => `/api/bookings/my-tickets`
 };
 
 const state = {
     movies: [],
     activeGenre: '',
+    searchQuery: '',
     selectedMovie: null,
     showtimes: [],
-    selectedShowtime: null,
     selectedShowtime: null,
     selectedSeats: [],
     user: null,
     token: null,
-    realSeats: { booked: [], locked: [] }
+    realSeats: { booked: [], locked: [] },
+    cinemas: [],
+    activeArea: '',
+    activeCinemaId: ''
 };
 
 const socket = typeof io !== 'undefined' ? io() : null;
@@ -201,12 +207,18 @@ function renderGenreFilter() {
 
 function renderMovies() {
     const grid = $('#movies-grid');
-    const list = state.activeGenre
-        ? state.movies.filter(m => (m.genres || []).includes(state.activeGenre))
-        : state.movies;
+    const query = state.searchQuery.trim().toLowerCase();
+    const list = state.movies.filter(m => {
+        if (state.activeGenre && !(m.genres || []).includes(state.activeGenre)) return false;
+        if (query && !(m.title || '').toLowerCase().includes(query)) return false;
+        return true;
+    });
 
     if (list.length === 0) {
-        grid.innerHTML = `<div class="empty-state">No films in this category yet.</div>`;
+        const msg = query
+            ? `No films match “${escapeHtml(state.searchQuery.trim())}”.`
+            : 'No films in this category yet.';
+        grid.innerHTML = `<div class="empty-state">${msg}</div>`;
         return;
     }
 
@@ -238,6 +250,8 @@ function renderMovies() {
 
 async function openMovie(movie) {
     state.selectedMovie = movie;
+    state.activeArea = '';
+    state.activeCinemaId = '';
     renderMovieDetail(movie);
     showView('view-showtimes');
     $('#showtimes-list').innerHTML = `
@@ -249,18 +263,89 @@ async function openMovie(movie) {
         const res = await fetch(API.showtimes(movie._id));
         if (res.status === 404) {
             state.showtimes = [];
+            renderCinemaFilters();
             $('#showtimes-list').innerHTML = `
                 <div class="empty-state">No screenings scheduled for this film.</div>`;
             return;
         }
         if (!res.ok) throw new Error('Failed to load showtimes');
         state.showtimes = await res.json();
+        renderCinemaFilters();
         renderShowtimes();
     } catch (err) {
         console.error(err);
         $('#showtimes-list').innerHTML = `
             <div class="empty-state">Couldn't load showtimes. Try again in a moment.</div>`;
     }
+}
+
+function getShowtimeAreas() {
+    const areas = new Set();
+    state.showtimes.forEach(st => {
+        if (st.cinemaId && st.cinemaId.area) areas.add(st.cinemaId.area);
+    });
+    return [...areas].sort();
+}
+
+function getShowtimeCinemas() {
+    const map = new Map();
+    state.showtimes.forEach(st => {
+        if (!st.cinemaId || !st.cinemaId._id) return;
+        if (state.activeArea && st.cinemaId.area !== state.activeArea) return;
+        map.set(st.cinemaId._id, st.cinemaId);
+    });
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function renderCinemaFilters() {
+    const areaChips = $('#area-chips');
+    const cinemaChips = $('#cinema-chips');
+    if (!areaChips || !cinemaChips) return;
+
+    const areas = getShowtimeAreas();
+    areaChips.innerHTML = '';
+    const allArea = el('button', 'chip' + (state.activeArea === '' ? ' is-active' : ''), 'ALL');
+    allArea.dataset.area = '';
+    areaChips.appendChild(allArea);
+    areas.forEach(area => {
+        const c = el('button', 'chip' + (state.activeArea === area ? ' is-active' : ''), area.toUpperCase());
+        c.dataset.area = area;
+        areaChips.appendChild(c);
+    });
+
+    const cinemas = getShowtimeCinemas();
+    cinemaChips.innerHTML = '';
+    const allCinema = el('button', 'chip' + (state.activeCinemaId === '' ? ' is-active' : ''), 'ALL');
+    allCinema.dataset.cinema = '';
+    cinemaChips.appendChild(allCinema);
+    cinemas.forEach(cin => {
+        const c = el('button', 'chip' + (state.activeCinemaId === cin._id ? ' is-active' : ''), cin.name.toUpperCase());
+        c.dataset.cinema = cin._id;
+        cinemaChips.appendChild(c);
+    });
+}
+
+function bindCinemaFilters() {
+    const areaChips = $('#area-chips');
+    const cinemaChips = $('#cinema-chips');
+    if (!areaChips || !cinemaChips) return;
+
+    areaChips.addEventListener('click', (e) => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        state.activeArea = chip.dataset.area || '';
+        state.activeCinemaId = '';
+        renderCinemaFilters();
+        renderShowtimes();
+    });
+
+    cinemaChips.addEventListener('click', (e) => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        state.activeCinemaId = chip.dataset.cinema || '';
+        renderCinemaFilters();
+        renderShowtimes();
+    });
 }
 
 function renderMovieDetail(movie) {
@@ -271,7 +356,7 @@ function renderMovieDetail(movie) {
 
     $('#movie-detail').innerHTML = `
         <div>
-            <p class="movie-detail-kicker">// FEATURE PRESENTATION</p>
+            <p class="movie-detail-kicker">FEATURE PRESENTATION</p>
             <h1 class="movie-detail-title">${escapeHtml(movie.title)}</h1>
             <div class="movie-detail-genres">${genres}</div>
         </div>
@@ -301,7 +386,18 @@ function renderShowtimes() {
         return;
     }
 
-    const sorted = [...state.showtimes].sort(
+    const filtered = state.showtimes.filter(st => {
+        if (state.activeArea && (!st.cinemaId || st.cinemaId.area !== state.activeArea)) return false;
+        if (state.activeCinemaId && (!st.cinemaId || st.cinemaId._id !== state.activeCinemaId)) return false;
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        list.innerHTML = `<div class="empty-state">No screenings match this filter.</div>`;
+        return;
+    }
+
+    const sorted = [...filtered].sort(
         (a, b) => new Date(a.startTime) - new Date(b.startTime)
     );
 
@@ -323,23 +419,43 @@ function renderShowtimes() {
 
         dayGroup.appendChild(el('h2', 'showtime-day-label', dayLabelText));
 
+        const byCinema = {};
         group.items.forEach(st => {
-            const time = fmtTime(new Date(st.startTime));
-            const lowAvail = st.availableSeats < st.totalSeats * 0.2;
-            const row = el('div', 'showtime-row');
-            row.innerHTML = `
-                <div class="showtime-time">${time}</div>
-                <div class="showtime-meta">
-                    <span class="showtime-room">${escapeHtml(st.theaterRoom)}</span>
-                    <span class="showtime-availability${lowAvail ? ' is-low' : ''}">
-                        ${st.availableSeats} of ${st.totalSeats} seats free
-                    </span>
-                </div>
-                <div class="showtime-cta">PICK SEAT →</div>
-            `;
-            row.addEventListener('click', () => openSeatMap(st));
-            dayGroup.appendChild(row);
+            const key = st.cinemaId && st.cinemaId._id ? st.cinemaId._id : 'unknown';
+            if (!byCinema[key]) byCinema[key] = { cinema: st.cinemaId, items: [] };
+            byCinema[key].items.push(st);
         });
+
+        Object.values(byCinema)
+            .sort((a, b) => {
+                const an = a.cinema ? a.cinema.name : '';
+                const bn = b.cinema ? b.cinema.name : '';
+                return an.localeCompare(bn);
+            })
+            .forEach(({ cinema, items }) => {
+                const cinemaLabel = cinema
+                    ? `${cinema.name} · ${cinema.area}`
+                    : 'Unknown Cinema';
+                dayGroup.appendChild(el('h3', 'showtime-cinema-label', cinemaLabel));
+
+                items.forEach(st => {
+                    const time = fmtTime(new Date(st.startTime));
+                    const lowAvail = st.availableSeats < st.totalSeats * 0.2;
+                    const row = el('div', 'showtime-row');
+                    row.innerHTML = `
+                        <div class="showtime-time">${time}</div>
+                        <div class="showtime-meta">
+                            <span class="showtime-room">${escapeHtml(st.theaterRoom)}</span>
+                            <span class="showtime-availability${lowAvail ? ' is-low' : ''}">
+                                ${st.availableSeats} of ${st.totalSeats} seats free
+                            </span>
+                        </div>
+                        <div class="showtime-cta">PICK SEAT →</div>
+                    `;
+                    row.addEventListener('click', () => openSeatMap(st));
+                    dayGroup.appendChild(row);
+                });
+            });
 
         list.appendChild(dayGroup);
     });
@@ -382,11 +498,15 @@ async function openSeatMap(showtime) {
 function renderShowtimeInfo(showtime) {
     const date = new Date(showtime.startTime);
     const movie = state.selectedMovie || { title: "Unknown" };
+    const cinemaLabel = showtime.cinemaId
+        ? `${showtime.cinemaId.name} · ${showtime.cinemaId.area}`
+        : '';
     $('#showtime-info').innerHTML = `
         <h1 class="showtime-info-title">${escapeHtml(movie.title)}</h1>
         <div class="showtime-info-meta">
             <span>${fmtDateLong(date)}</span>
             <span>${fmtTime(date)}</span>
+            ${cinemaLabel ? `<span>${escapeHtml(cinemaLabel)}</span>` : ''}
             <span>${escapeHtml(showtime.theaterRoom)}</span>
         </div>
     `;
@@ -526,12 +646,14 @@ function openBookingModal() {
     }
 
     const date = new Date(state.selectedShowtime.startTime);
+    const cinema = state.selectedShowtime.cinemaId;
+    const cinemaLabel = cinema ? `${cinema.name} · ${cinema.area}` : '';
     $('#modal-title').textContent = `Hold ${state.selectedSeats.length} seat(s)?`;
     $('#modal-subtitle').innerHTML = `
         ${escapeHtml(state.selectedMovie.title)} ·
         ${fmtDateLong(date)} ·
         ${fmtTime(date)} ·
-        ${escapeHtml(state.selectedShowtime.theaterRoom)}<br>
+        ${cinemaLabel ? escapeHtml(cinemaLabel) + ' · ' : ''}${escapeHtml(state.selectedShowtime.theaterRoom)}<br>
         <strong style="color:var(--gold); display:block; margin-top:0.5rem;">Seats: ${state.selectedSeats.join(', ')}</strong>
     `;
 
@@ -545,6 +667,16 @@ function closeModal() {
     $('#modal').setAttribute('aria-hidden', 'true');
 }
 
+/* PAYMENT FLOW — lock seats, open payment modal, confirm or release. */
+
+const payment = {
+    showtimeId: null,
+    seatNumbers: [],
+    expiresAt: null,
+    timerHandle: null,
+    submitting: false
+};
+
 async function confirmBooking() {
     if (!state.token || !state.user) {
         closeModal();
@@ -555,12 +687,12 @@ async function confirmBooking() {
 
     const btn = $('#modal-confirm');
     btn.disabled = true;
-    btn.innerHTML = `PROCESSING<span class="cta-arrow">…</span>`;
+    btn.innerHTML = `HOLDING SEATS<span class="cta-arrow">…</span>`;
 
     try {
-        const res = await fetch(API.book, {
+        const res = await fetch(API.lockSeats, {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${state.token}`
             },
@@ -573,27 +705,193 @@ async function confirmBooking() {
 
         const data = await res.json().catch(() => ({}));
 
-        if (res.status === 409 || res.status === 429 || res.status === 402) {
+        if (!res.ok) {
             closeModal();
-            showToast(data.error || 'Seat taken or rate limited.');
+            showToast(data.error || 'Could not hold those seats.');
             return;
         }
 
-        if (!res.ok) {
-            throw new Error(data.error || 'Booking failed');
-        }
-
         closeModal();
-        renderTicket(data.bookingDetails);
-        showView('view-confirm');
-        showToast('Reserved. Enjoy the film.', 'success');
+        openPaymentModal(data);
     } catch (err) {
         console.error(err);
-        showToast(err.message || 'Booking failed. Try again.');
+        showToast(err.message || 'Could not reach the box office. Try again.');
     } finally {
         btn.disabled = false;
         btn.innerHTML = `CONFIRM &amp; PAY <span class="cta-arrow">→</span>`;
     }
+}
+
+function openPaymentModal({ seatNumbers, expiresAt }) {
+    payment.showtimeId = state.selectedShowtime._id;
+    payment.seatNumbers = seatNumbers.slice();
+    payment.expiresAt = expiresAt;
+    payment.submitting = false;
+
+    const date = new Date(state.selectedShowtime.startTime);
+    const cinema = state.selectedShowtime.cinemaId;
+    const cinemaLabel = cinema ? `${cinema.name} · ${cinema.area}` : '';
+    $('#payment-subtitle').innerHTML = `
+        ${escapeHtml(state.selectedMovie.title)} ·
+        ${fmtDateLong(date)} · ${fmtTime(date)}<br>
+        ${cinemaLabel ? escapeHtml(cinemaLabel) + ' · ' : ''}${escapeHtml(state.selectedShowtime.theaterRoom)}<br>
+        <strong style="color:var(--velvet); display:block; margin-top:0.5rem;">Seats: ${payment.seatNumbers.join(', ')}</strong>
+    `;
+
+    $('#payment-form').reset();
+    const submitBtn = $('#payment-submit');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = `PAY NOW <span class="cta-arrow">→</span>`;
+
+    $('#payment-modal').classList.add('is-open');
+    $('#payment-modal').setAttribute('aria-hidden', 'false');
+    setTimeout(() => $('#pay-name').focus(), 60);
+
+    startPaymentTimer();
+}
+
+function startPaymentTimer() {
+    stopPaymentTimer();
+    const tick = () => {
+        const remaining = Math.max(0, payment.expiresAt - Date.now());
+        const totalSec = Math.ceil(remaining / 1000);
+        const mm = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const ss = String(totalSec % 60).padStart(2, '0');
+        const valEl = $('#payment-timer-value');
+        const wrapEl = $('#payment-timer');
+        if (valEl) valEl.textContent = `${mm}:${ss}`;
+        if (wrapEl) wrapEl.classList.toggle('is-urgent', totalSec <= 60);
+
+        if (remaining <= 0) {
+            stopPaymentTimer();
+            handlePaymentExpired();
+        }
+    };
+    tick();
+    payment.timerHandle = setInterval(tick, 1000);
+}
+
+function stopPaymentTimer() {
+    if (payment.timerHandle) {
+        clearInterval(payment.timerHandle);
+        payment.timerHandle = null;
+    }
+}
+
+function closePaymentModal() {
+    stopPaymentTimer();
+    $('#payment-modal').classList.remove('is-open');
+    $('#payment-modal').setAttribute('aria-hidden', 'true');
+}
+
+async function releaseHold(showToastIfMissing) {
+    if (!payment.showtimeId || payment.seatNumbers.length === 0) return;
+    const body = JSON.stringify({
+        showtimeId: payment.showtimeId,
+        seatNumbers: payment.seatNumbers,
+        socketId: socket ? socket.id : null
+    });
+    try {
+        await fetch(API.cancelLock, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.token}`
+            },
+            body
+        });
+    } catch (err) {
+        if (showToastIfMissing) showToast('Could not contact the box office.');
+    }
+}
+
+async function handlePaymentCancel() {
+    if (payment.submitting) return;
+    closePaymentModal();
+    await releaseHold(false);
+    showToast('Payment cancelled. Seats released.', 'success');
+}
+
+async function handlePaymentExpired() {
+    if (payment.submitting) return;
+    closePaymentModal();
+    await releaseHold(false);
+    showToast('Hold expired. Please pick your seats again.');
+}
+
+async function submitPayment(e) {
+    e.preventDefault();
+    if (payment.submitting) return;
+
+    const name = $('#pay-name').value.trim();
+    const card = $('#pay-card').value.replace(/\s+/g, '');
+    const expiry = $('#pay-expiry').value.trim();
+    const cvv = $('#pay-cvv').value.trim();
+
+    if (name.length < 2) return showToast('Enter the cardholder name.');
+    if (!/^\d{15,19}$/.test(card)) return showToast('Card number must be 15–19 digits.');
+    if (!/^\d{2}\/\d{2}$/.test(expiry)) return showToast('Expiry must be MM/YY.');
+    if (!/^\d{3,4}$/.test(cvv)) return showToast('CVV must be 3–4 digits.');
+
+    const submitBtn = $('#payment-submit');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `PROCESSING<span class="cta-arrow">…</span>`;
+    payment.submitting = true;
+
+    try {
+        const res = await fetch(API.confirmPayment, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.token}`
+            },
+            body: JSON.stringify({
+                showtimeId: payment.showtimeId,
+                seatNumbers: payment.seatNumbers,
+                socketId: socket ? socket.id : null
+            })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.status === 410) {
+            closePaymentModal();
+            showToast(data.error || 'Hold expired. Please pick your seats again.');
+            return;
+        }
+
+        if (res.status === 402) {
+            closePaymentModal();
+            showToast(data.error || 'Payment declined. Seats released.');
+            return;
+        }
+
+        if (!res.ok) throw new Error(data.error || 'Payment failed');
+
+        closePaymentModal();
+        renderTicket(data.bookingDetails);
+        showView('view-confirm');
+        showToast('Payment successful. Enjoy the film.', 'success');
+    } catch (err) {
+        console.error(err);
+        showToast(err.message || 'Payment failed. Try again.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `PAY NOW <span class="cta-arrow">→</span>`;
+    } finally {
+        payment.submitting = false;
+    }
+}
+
+/* Card-number "1234 5678 …" formatter and MM/YY auto-slash */
+function formatCardNumber(value) {
+    const digits = value.replace(/\D/g, '').slice(0, 19);
+    return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+}
+
+function formatExpiry(value) {
+    const digits = value.replace(/\D/g, '').slice(0, 4);
+    if (digits.length < 3) return digits;
+    return digits.slice(0, 2) + '/' + digits.slice(2);
 }
 
 function renderTicket(booking) {
@@ -605,10 +903,13 @@ function renderTicket(booking) {
     const duration = state.selectedMovie ? state.selectedMovie.duration : 0;
     const room = state.selectedShowtime ? state.selectedShowtime.theaterRoom : 'Cinema';
     const date = state.selectedShowtime ? new Date(state.selectedShowtime.startTime) : new Date(firstBooking.bookingTime);
+    const cinema = state.selectedShowtime ? state.selectedShowtime.cinemaId : null;
+    const cinemaName = cinema ? cinema.name : '—';
+    const cinemaArea = cinema ? cinema.area : '—';
 
     $('#ticket-stub').innerHTML = `
         <div class="ticket-stub-top">
-            <div class="stub-kicker">// TICKETIN.DB · ADMIT ${isArray ? booking.length : 'ONE'}</div>
+            <div class="stub-kicker">TICKETIN.DB · ADMIT ${isArray ? booking.length : 'ONE'}</div>
             <h2 class="stub-title">${escapeHtml(movieTitle)}</h2>
             <div class="stub-grid">
                 <div class="stub-cell">
@@ -618,6 +919,10 @@ function renderTicket(booking) {
                 <div class="stub-cell">
                     <span class="stub-label">TIME</span>
                     <span class="stub-value is-mono">${fmtTime(date)}</span>
+                </div>
+                <div class="stub-cell">
+                    <span class="stub-label">CINEMA</span>
+                    <span class="stub-value">${escapeHtml(cinemaName)}<br><span style="font-family:var(--mono); font-size:0.7rem; color:var(--cream-mute);">${escapeHtml(cinemaArea)}</span></span>
                 </div>
                 <div class="stub-cell">
                     <span class="stub-label">THEATER</span>
@@ -686,14 +991,16 @@ async function openMyTickets() {
             const b = t.booking;
             const m = t.movie;
             const s = t.showtime;
+            const c = t.cinema;
             const date = s ? new Date(s.startTime) : new Date(b.bookingTime);
+            const cinemaLabel = c ? `${c.name} · ${c.area}` : 'Unknown Cinema';
 
             const row = el('div', 'ticket-row');
             row.innerHTML = `
                 <div>
                     <h3 class="ticket-row-title">${m ? escapeHtml(m.title) : 'Unknown Movie'}</h3>
                     <div class="ticket-row-meta">
-                        ${fmtDateLong(date)} at ${fmtTime(date)} · ${s ? escapeHtml(s.theaterRoom) : 'Unknown Room'} · Status: ${b.status}
+                        ${fmtDateLong(date)} at ${fmtTime(date)} · ${escapeHtml(cinemaLabel)} · ${s ? escapeHtml(s.theaterRoom) : 'Unknown Room'} · Status: ${b.status}
                     </div>
                 </div>
                 <div class="ticket-row-seat">${b.seatNumber}</div>
@@ -735,6 +1042,9 @@ document.addEventListener('click', (e) => {
         showView('view-showtimes');
     } else if (action === 'close-modal') {
         closeModal();
+    } else if (action === 'cancel-payment') {
+        e.preventDefault();
+        handlePaymentCancel();
     } else if (action === 'my-tickets') {
         e.preventDefault();
         openMyTickets();
@@ -749,6 +1059,13 @@ document.addEventListener('click', (e) => {
 
 $('#cta-book').addEventListener('click', openBookingModal);
 $('#modal-confirm').addEventListener('click', confirmBooking);
+$('#payment-form').addEventListener('submit', submitPayment);
+$('#pay-card').addEventListener('input', (e) => {
+    e.target.value = formatCardNumber(e.target.value);
+});
+$('#pay-expiry').addEventListener('input', (e) => {
+    e.target.value = formatExpiry(e.target.value);
+});
 
 let isLoginMode = true;
 const authForm = $('#auth-form');
@@ -897,7 +1214,10 @@ $('#password-form').addEventListener('submit', async (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && $('#modal').classList.contains('is-open')) {
+    if (e.key !== 'Escape') return;
+    if ($('#payment-modal').classList.contains('is-open')) {
+        handlePaymentCancel();
+    } else if ($('#modal').classList.contains('is-open')) {
         closeModal();
     }
 });
@@ -906,5 +1226,36 @@ document.addEventListener('keydown', (e) => {
    INIT
     */
 
+function bindSearch() {
+    const input = $('#movie-search');
+    const clearBtn = $('#search-clear');
+    if (!input) return;
+
+    const updateClearVisibility = () => {
+        if (!clearBtn) return;
+        clearBtn.style.display = input.value ? 'inline-flex' : 'none';
+    };
+
+    input.addEventListener('input', () => {
+        state.searchQuery = input.value;
+        updateClearVisibility();
+        renderMovies();
+    });
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            input.value = '';
+            state.searchQuery = '';
+            updateClearVisibility();
+            renderMovies();
+            input.focus();
+        });
+    }
+
+    updateClearVisibility();
+}
+
 loadUser();
 loadMovies();
+bindCinemaFilters();
+bindSearch();

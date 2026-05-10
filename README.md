@@ -19,10 +19,13 @@ cd TicketIn.db-Booking-System
 ### 2. Install dependencies
 
 ```bash
+cd backend
 npm install
 ```
 
 ### 3. Start MongoDB and Redis
+
+From the project root:
 
 ```bash
 docker-compose up -d
@@ -38,54 +41,64 @@ This spins up two containers:
 ### 4. Seed the database
 
 ```bash
+cd backend
 npm run seed
 ```
 
-Populates the database with 150 fictional movies and ~800 showtimes for testing.
+Populates the database with 4 cinemas, 150 fictional movies, and ~800 showtimes.
 
 ### 5. Start the server
 
 ```bash
+cd backend
 node server.js
 ```
 
-The API will be available at `http://localhost:3000`.
+The API and the static frontend will be available at `http://localhost:3000`.
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/` | Health check |
 | GET | `/api/movies` | Get all movies |
+| GET | `/api/cinemas` | Get all cinemas |
 | GET | `/api/showtimes/:movieId` | Get showtimes for a specific movie |
-| POST | `/api/bookings/request-seat` | Book a seat |
-
-### Booking Request Body
-
-```json
-{
-  "userId": "user_001",
-  "showtimeId": "664abc123def456ghi789",
-  "seatNumber": "A1"
-}
-```
+| GET | `/api/showtimes/:showtimeId/seats` | Real-time booked + locked seats |
+| POST | `/api/bookings/lock-seats` | Place a 5-minute hold on selected seats |
+| POST | `/api/bookings/confirm-payment` | Charge the held seats and issue tickets |
+| POST | `/api/bookings/cancel-lock` | Release a held set of seats |
+| GET | `/api/bookings/my-tickets` | List the current user's bookings |
+| POST | `/api/auth/register` \| `/login` | Account auth |
 
 ## Project Structure
 
 ```
 TicketIn.db-Booking-System/
-├── models/
-│   ├── Movie.js          # Movie schema (title, duration, genres, cast)
-│   ├── Showtime.js       # Showtime schema (movieId, startTime, theaterRoom, seats)
-│   └── Booking.js        # Booking schema (userId, showtimeId, seatNumber, status)
-├── routes/
-│   ├── movie.js          # GET /api/movies
-│   ├── showtime.js       # GET /api/showtimes/:movieId
-│   └── booking.js        # POST /api/bookings/request-seat
-├── server.js             # Express app entry point
-├── seed.js               # Database seeding script
 ├── docker-compose.yml    # MongoDB + Redis containers
-└── package.json
+├── README.md
+├── backend/              # Express API + business logic
+│   ├── server.js         # Express app entry point
+│   ├── seed.js           # Database seeding script
+│   ├── benchmark.js
+│   ├── package.json
+│   ├── middleware/
+│   │   └── auth.js
+│   ├── models/
+│   │   ├── Movie.js
+│   │   ├── Cinema.js
+│   │   ├── Showtime.js
+│   │   ├── Booking.js
+│   │   └── User.js
+│   └── routes/
+│       ├── movie.js
+│       ├── cinema.js
+│       ├── showtime.js
+│       ├── booking.js
+│       └── auth.js
+└── frontend/             # Static client (served by the backend)
+    ├── index.html
+    ├── styles.css
+    └── app.js
 ```
 
 ## Stopping the Services

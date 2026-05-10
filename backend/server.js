@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Redis = require('ioredis');
+const path = require('path');
 
 const http = require('http');
 const { Server } = require('socket.io');
@@ -14,7 +15,7 @@ const io = new Server(httpServer);
 app.set('io', io);
 
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 // Connect to MongoDB for our main data storage
 mongoose.connect('mongodb://127.0.0.1:27017/ticketin_db')
@@ -35,11 +36,13 @@ const bookingRoutes = require('./routes/booking');
 const movieRoutes = require('./routes/movie');
 const showtimeRoutes = require('./routes/showtime');
 const authRoutes = require('./routes/auth');
+const cinemaRoutes = require('./routes/cinema');
 
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/showtimes', showtimeRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/cinemas', cinemaRoutes);
 
 io.on('connection', (socket) => {
     socket.on('join_showtime', (showtimeId) => {

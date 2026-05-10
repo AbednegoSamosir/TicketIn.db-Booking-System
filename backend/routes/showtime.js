@@ -6,7 +6,8 @@ const Booking = require('../models/Booking');
 router.get('/:movieId', async (req, res) => {
     try {
         const showtimes = await Showtime.find({ movieId: req.params.movieId })
-            .populate('movieId', 'title duration');
+            .populate('movieId', 'title duration')
+            .populate('cinemaId', 'name area');
 
         if (showtimes.length === 0) {
             return res.status(404).json({ message: "No showtimes found for this movie." });

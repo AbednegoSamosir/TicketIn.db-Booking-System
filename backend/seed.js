@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Movie = require('./models/Movie');
 const Showtime = require('./models/Showtime');
+const Cinema = require('./models/Cinema');
 
 const MONGO_URI = 'mongodb://127.0.0.1:27017/ticketin_db';
 
@@ -38,6 +39,13 @@ const theaterRooms = [
     'Studio 1', 'Studio 2', 'Studio 3', 'Studio 4', 'Studio 5',
     'Studio 6', 'Studio 7', 'IMAX', 'Premiere A', 'Premiere B',
     'Deluxe 1', 'Deluxe 2', 'Gold Class', '4DX', 'ScreenX'
+];
+
+const cinemaData = [
+    { name: 'Margo City', area: 'Depok' },
+    { name: 'Depok Town Square', area: 'Depok' },
+    { name: 'Grand Indonesia', area: 'Jakarta' },
+    { name: 'Plaza Indonesia', area: 'Jakarta' }
 ];
 
 const movieData = [
@@ -211,7 +219,7 @@ const SHOWTIMES_PER_MOVIE_MAX = 8;
 
 const screeningHours = [10, 12, 13, 15, 16, 18, 19, 20, 21, 22];
 
-function generateShowtimesForMovie(movieId) {
+function generateShowtimesForMovie(movieId, cinemas) {
     const count = randInt(SHOWTIMES_PER_MOVIE_MIN, SHOWTIMES_PER_MOVIE_MAX);
     const showtimes = [];
 
@@ -226,9 +234,11 @@ function generateShowtimesForMovie(movieId) {
 
         const totalSeats = [40, 50, 60, 80, 100, 120, 150][randInt(0, 6)];
         const bookedSeats = randInt(0, Math.floor(totalSeats * 0.6));
+        const cinema = cinemas[randInt(0, cinemas.length - 1)];
 
         showtimes.push({
             movieId,
+            cinemaId: cinema._id,
             startTime,
             theaterRoom: theaterRooms[randInt(0, theaterRooms.length - 1)],
             totalSeats,
@@ -246,7 +256,11 @@ async function seed() {
 
         const deletedMovies = await Movie.deleteMany({});
         const deletedShowtimes = await Showtime.deleteMany({});
-        console.log(`[CLEAN] Cleared ${deletedMovies.deletedCount} movies and ${deletedShowtimes.deletedCount} showtimes`);
+        const deletedCinemas = await Cinema.deleteMany({});
+        console.log(`[CLEAN] Cleared ${deletedMovies.deletedCount} movies, ${deletedShowtimes.deletedCount} showtimes, ${deletedCinemas.deletedCount} cinemas`);
+
+        const insertedCinemas = await Cinema.insertMany(cinemaData);
+        console.log(`[INSERT] ${insertedCinemas.length} cinemas added`);
 
         const moviesToInsert = movieData.map(m => ({
             title: m.title,
@@ -260,7 +274,7 @@ async function seed() {
 
         let allShowtimes = [];
         for (const movie of insertedMovies) {
-            const showtimes = generateShowtimesForMovie(movie._id);
+            const showtimes = generateShowtimesForMovie(movie._id, insertedCinemas);
             allShowtimes.push(...showtimes);
         }
 
@@ -272,6 +286,7 @@ async function seed() {
         console.log('|     TicketIn.db  --  SEEDING COMPLETE     |');
         console.log('|                                          |');
         console.log('+------------------------------------------+');
+        console.log(`|  Cinemas   : ${String(insertedCinemas.length).padEnd(27)}|`);
         console.log(`|  Movies    : ${String(insertedMovies.length).padEnd(27)}|`);
         console.log(`|  Showtimes : ${String(insertedShowtimes.length).padEnd(27)}|`);
         console.log(`|  Database  : ticketin_db${' '.repeat(16)}|`);

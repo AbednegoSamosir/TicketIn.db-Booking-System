@@ -37,11 +37,9 @@
         <!--  VIEW: MOVIE GRID  -->
         <section class="view view-movies is-active" id="view-movies">
             <div class="hero">
-                <p class="kicker">// EST. 2025 · NOW SHOWING</p>
-                <h1 class="hero-title">
-                    <span class="hero-title-line">A hundred films,</span>
-                    <span class="hero-title-line hero-title-italic">one velvet room.</span>
-                </h1>
+                <div class="marquee" aria-label="Now Showing">
+                    <span class="marquee-text">NOW<br>SHOWING</span>
+                </div>
                 <p class="hero-lede">
                     Reserve a seat in a quiet city cinema. Fictional listings, real reservations.
                 </p>
@@ -61,6 +59,19 @@
                         <span class="stat-label">DAYS AHEAD</span>
                     </div>
                 </div>
+            </div>
+
+            <div class="search-bar">
+                <span class="search-icon" aria-hidden="true">⌕</span>
+                <input
+                    type="search"
+                    id="movie-search"
+                    class="search-input"
+                    placeholder="SEARCH FILMS BY TITLE…"
+                    autocomplete="off"
+                    spellcheck="false"
+                />
+                <button type="button" class="search-clear" id="search-clear" aria-label="Clear search">×</button>
             </div>
 
             <div class="filter-bar">
@@ -87,6 +98,20 @@
 
             <div class="section-rule">
                 <span class="section-rule-label">SCREENINGS</span>
+            </div>
+
+            <div class="filter-bar">
+                <span class="filter-label">AREA</span>
+                <div class="filter-chips" id="area-chips">
+                    <button class="chip is-active" data-area="">ALL</button>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <span class="filter-label">CINEMA</span>
+                <div class="filter-chips" id="cinema-chips">
+                    <button class="chip is-active" data-cinema="">ALL</button>
+                </div>
             </div>
 
             <div class="showtimes-list" id="showtimes-list">
@@ -156,12 +181,12 @@
                 <span class="back-arrow">←</span> ALL FILMS
             </button>
             <div class="auth-container" style="max-width: 400px; margin: 2rem auto;">
-                <p class="kicker" id="auth-kicker">// MEMBERSHIP</p>
+                <p class="kicker" id="auth-kicker">MEMBERSHIP</p>
                 <h2 class="auth-title" id="auth-title" style="font-family: var(--serif); font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem; line-height: 1.1;">Access the Velvet Room</h2>
                 <form id="auth-form" class="auth-form">
                     <label class="modal-field">
                         <span class="modal-field-label">ACCOUNT NAME / EMAIL</span>
-                        <input type="text" id="auth-account" class="modal-input" placeholder="e.g. arsyam" autocomplete="off" spellcheck="false" required />
+                        <input type="text" id="auth-account" class="modal-input" placeholder="username" autocomplete="off" spellcheck="false" required />
                     </label>
                     <label class="modal-field">
                         <span class="modal-field-label">PASSWORD</span>
@@ -185,7 +210,7 @@
                 <span class="back-arrow">←</span> BACK
             </button>
             <div class="auth-container" style="max-width: 400px; margin: 2rem auto;">
-                <p class="kicker">// PROFILE</p>
+                <p class="kicker">PROFILE</p>
                 <h2 class="auth-title" style="font-family: var(--serif); font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem; line-height: 1.1;">Account Settings</h2>
                 
                 <form id="profile-form" class="auth-form" style="margin-bottom: 2.5rem;">
@@ -228,16 +253,14 @@
     <footer class="colophon">
         <span class="colophon-line">TICKETIN.DB</span>
         <span class="colophon-dot">·</span>
-        <span class="colophon-line">A booking experiment</span>
-        <span class="colophon-dot">·</span>
-        <span class="colophon-line">Built on Express, MongoDB &amp; Redis</span>
+        <span class="colophon-line">BROUGHT TO YOU BY ABED N CO</span>
     </footer>
 
     <!--  MODAL: USERNAME + CONFIRM  -->
     <div class="modal" id="modal" aria-hidden="true">
         <div class="modal-backdrop" data-action="close-modal"></div>
         <div class="modal-card">
-            <p class="modal-kicker">// CONFIRM RESERVATION</p>
+            <p class="modal-kicker">CONFIRM RESERVATION</p>
             <h2 class="modal-title" id="modal-title">Hold this seat?</h2>
             <p class="modal-subtitle" id="modal-subtitle"></p>
 
@@ -248,6 +271,48 @@
                     <span class="cta-arrow">→</span>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!--  MODAL: PAYMENT  -->
+    <div class="modal" id="payment-modal" aria-hidden="true">
+        <div class="modal-backdrop" data-action="cancel-payment"></div>
+        <div class="modal-card payment-card">
+            <p class="modal-kicker">PAYMENT</p>
+            <h2 class="modal-title">Complete Payment</h2>
+            <p class="modal-subtitle" id="payment-subtitle"></p>
+
+            <div class="payment-timer" id="payment-timer">
+                <span class="payment-timer-label">SEATS HELD FOR YOU</span>
+                <span class="payment-timer-value" id="payment-timer-value">05:00</span>
+            </div>
+
+            <form id="payment-form" class="payment-form">
+                <label class="modal-field">
+                    <span class="modal-field-label">CARDHOLDER NAME</span>
+                    <input type="text" id="pay-name" class="modal-input" placeholder="JANE APPLESEED" autocomplete="cc-name" required />
+                </label>
+                <label class="modal-field">
+                    <span class="modal-field-label">CARD NUMBER</span>
+                    <input type="text" id="pay-card" class="modal-input" placeholder="1234 5678 9012 3456" inputmode="numeric" autocomplete="cc-number" maxlength="19" required />
+                </label>
+                <div class="payment-row">
+                    <label class="modal-field">
+                        <span class="modal-field-label">EXPIRY (MM/YY)</span>
+                        <input type="text" id="pay-expiry" class="modal-input" placeholder="MM/YY" inputmode="numeric" autocomplete="cc-exp" maxlength="5" required />
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-field-label">CVV</span>
+                        <input type="password" id="pay-cvv" class="modal-input" placeholder="•••" inputmode="numeric" autocomplete="cc-csc" maxlength="4" required />
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-ghost" data-action="cancel-payment">CANCEL</button>
+                    <button type="submit" class="btn-primary" id="payment-submit">
+                        PAY NOW <span class="cta-arrow">→</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

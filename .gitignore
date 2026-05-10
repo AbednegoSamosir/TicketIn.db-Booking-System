@@ -1,7 +1,3 @@
 node_modules/
-<<<<<<< HEAD
-package-lock.json
-=======
 .idea/
 .DS_Store
->>>>>>> 92703b86062b56cda3412d270b612f07739ccd13
