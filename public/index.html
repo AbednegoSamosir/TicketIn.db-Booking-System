@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=JetBrains+Mono:wght@400;500;600&display=swap"
-        rel="stylesheet"
-    />
+        rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
     <div class="grain" aria-hidden="true"></div>
 
@@ -20,7 +21,9 @@
             <span class="brand-mark"></span>
             <span class="brand-name">TicketIn<span class="brand-dot">.</span>db</span>
         </a>
-        <div class="masthead-meta">
+        <div class="masthead-meta" style="display:flex; gap:1rem; align-items:center;">
+            <a href="#" class="brand" data-action="my-tickets"
+                style="font-family:var(--mono); font-size:0.8rem; color:var(--gold);">MY TICKETS</a>
             <span class="user-pill" id="user-pill">
                 <span class="user-pill-label">GUEST</span>
                 <span class="user-pill-id" id="user-id">— —</span>
@@ -29,7 +32,7 @@
     </header>
 
     <main>
-        <!-- ============ VIEW: MOVIE GRID ============ -->
+        <!--  VIEW: MOVIE GRID  -->
         <section class="view view-movies is-active" id="view-movies">
             <div class="hero">
                 <p class="kicker">// EST. 2025 · NOW SHOWING</p>
@@ -72,7 +75,7 @@
             </div>
         </section>
 
-        <!-- ============ VIEW: SHOWTIMES ============ -->
+        <!--  VIEW: SHOWTIMES  -->
         <section class="view view-showtimes" id="view-showtimes">
             <button class="back-link" data-action="home">
                 <span class="back-arrow">←</span> ALL FILMS
@@ -91,7 +94,7 @@
             </div>
         </section>
 
-        <!-- ============ VIEW: SEAT MAP ============ -->
+        <!--  VIEW: SEAT MAP  -->
         <section class="view view-seats" id="view-seats">
             <button class="back-link" data-action="back-to-showtimes">
                 <span class="back-arrow">←</span> SHOWTIMES
@@ -109,6 +112,7 @@
                 <div class="seat-legend">
                     <span class="legend-item"><span class="legend-swatch swatch-available"></span>AVAILABLE</span>
                     <span class="legend-item"><span class="legend-swatch swatch-selected"></span>SELECTED</span>
+                    <span class="legend-item"><span class="legend-swatch swatch-locked"></span>IN CHECKOUT</span>
                     <span class="legend-item"><span class="legend-swatch swatch-taken"></span>TAKEN</span>
                 </div>
             </div>
@@ -124,11 +128,23 @@
             </div>
         </section>
 
-        <!-- ============ VIEW: CONFIRMATION ============ -->
+        <!--  VIEW: CONFIRMATION  -->
         <section class="view view-confirm" id="view-confirm">
             <div class="ticket-stub" id="ticket-stub"></div>
             <div class="confirm-actions">
                 <button class="btn-secondary" data-action="home">BOOK ANOTHER FILM</button>
+            </div>
+        </section>
+        <!--  VIEW: MY TICKETS  -->
+        <section class="view view-mytickets" id="view-mytickets">
+            <button class="back-link" data-action="home">
+                <span class="back-arrow">←</span> ALL FILMS
+            </button>
+            <div class="section-rule">
+                <span class="section-rule-label">MY RESERVATIONS</span>
+            </div>
+            <div class="tickets-list" id="tickets-list">
+                <div class="empty-state">No reservations found.</div>
             </div>
         </section>
     </main>
@@ -141,7 +157,7 @@
         <span class="colophon-line">Built on Express, MongoDB &amp; Redis</span>
     </footer>
 
-    <!-- ============ MODAL: USERNAME + CONFIRM ============ -->
+    <!--  MODAL: USERNAME + CONFIRM  -->
     <div class="modal" id="modal" aria-hidden="true">
         <div class="modal-backdrop" data-action="close-modal"></div>
         <div class="modal-card">
@@ -151,14 +167,8 @@
 
             <label class="modal-field">
                 <span class="modal-field-label">YOUR NAME / HANDLE</span>
-                <input
-                    type="text"
-                    id="modal-input"
-                    class="modal-input"
-                    placeholder="e.g. arsyam"
-                    autocomplete="off"
-                    spellcheck="false"
-                />
+                <input type="text" id="modal-input" class="modal-input" placeholder="e.g. arsyam" autocomplete="off"
+                    spellcheck="false" />
                 <span class="modal-field-hint">Used as your booking ID. Stored locally only.</span>
             </label>
 
@@ -172,9 +182,11 @@
         </div>
     </div>
 
-    <!-- ============ TOAST ============ -->
+    <!--  TOAST  -->
     <div class="toast" id="toast" aria-hidden="true"></div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>
