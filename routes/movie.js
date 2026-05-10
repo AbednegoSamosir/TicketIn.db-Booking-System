@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Movie = require('../models/Movie');
 
-// GET all movies
+// Fetch the complete list of available movies from the database
 router.get('/', async (req, res) => {
     try {
         const movies = await Movie.find();

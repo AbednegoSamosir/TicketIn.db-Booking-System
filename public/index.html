@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TicketIn.db — A Velvet Room for Films</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="masthead">
+        <a class="brand" href="#" data-action="home">
+            <span class="brand-mark"></span>
+            <span class="brand-name">TicketIn<span class="brand-dot">.</span>db</span>
+        </a>
+        <div class="masthead-meta" style="display:flex; gap:1rem; align-items:center;">
+            <a href="#" class="brand" data-action="my-tickets"
+                style="font-family:var(--mono); font-size:0.8rem; color:var(--gold);">MY TICKETS</a>
+            <a href="#" class="brand" data-action="auth" id="nav-login"
+                style="font-family:var(--mono); font-size:0.8rem; color:var(--cream);">LOGIN</a>
+            <a href="#" class="user-pill" id="user-pill" data-action="profile" style="display:none;" title="View Profile">
+                <span class="user-pill-label">USER</span>
+                <span class="user-pill-id" id="user-id">— —</span>
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <!--  VIEW: MOVIE GRID  -->
+        <section class="view view-movies is-active" id="view-movies">
+            <div class="hero">
+                <p class="kicker">// EST. 2025 · NOW SHOWING</p>
+                <h1 class="hero-title">
+                    <span class="hero-title-line">A hundred films,</span>
+                    <span class="hero-title-line hero-title-italic">one velvet room.</span>
+                </h1>
+                <p class="hero-lede">
+                    Reserve a seat in a quiet city cinema. Fictional listings, real reservations.
+                </p>
+                <div class="hero-stats" id="hero-stats">
+                    <div class="stat">
+                        <span class="stat-num" id="stat-films">—</span>
+                        <span class="stat-label">FILMS</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <span class="stat-num" id="stat-genres">—</span>
+                        <span class="stat-label">GENRES</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <span class="stat-num">14</span>
+                        <span class="stat-label">DAYS AHEAD</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <span class="filter-label">FILTER</span>
+                <div class="filter-chips" id="filter-chips">
+                    <button class="chip is-active" data-genre="">ALL</button>
+                </div>
+            </div>
+
+            <div class="movies-grid" id="movies-grid">
+                <div class="loading-state">
+                    <span class="loading-dots">LOADING<span></span><span></span><span></span></span>
+                </div>
+            </div>
+        </section>
+
+        <!--  VIEW: SHOWTIMES  -->
+        <section class="view view-showtimes" id="view-showtimes">
+            <button class="back-link" data-action="home">
+                <span class="back-arrow">←</span> ALL FILMS
+            </button>
+
+            <div class="movie-detail" id="movie-detail"></div>
+
+            <div class="section-rule">
+                <span class="section-rule-label">SCREENINGS</span>
+            </div>
+
+            <div class="showtimes-list" id="showtimes-list">
+                <div class="loading-state">
+                    <span class="loading-dots">LOADING<span></span><span></span><span></span></span>
+                </div>
+            </div>
+        </section>
+
+        <!--  VIEW: SEAT MAP  -->
+        <section class="view view-seats" id="view-seats">
+            <button class="back-link" data-action="back-to-showtimes">
+                <span class="back-arrow">←</span> SHOWTIMES
+            </button>
+
+            <div class="showtime-info" id="showtime-info"></div>
+
+            <div class="theater">
+                <div class="screen">
+                    <div class="screen-glow"></div>
+                    <div class="screen-line"></div>
+                    <p class="screen-label">SCREEN</p>
+                </div>
+                <div class="seats-container" id="seats-container"></div>
+                <div class="seat-legend">
+                    <span class="legend-item"><span class="legend-swatch swatch-available"></span>AVAILABLE</span>
+                    <span class="legend-item"><span class="legend-swatch swatch-selected"></span>SELECTED</span>
+                    <span class="legend-item"><span class="legend-swatch swatch-locked"></span>IN CHECKOUT</span>
+                    <span class="legend-item"><span class="legend-swatch swatch-taken"></span>TAKEN</span>
+                </div>
+            </div>
+
+            <div class="book-bar">
+                <div class="book-summary" id="book-summary">
+                    <span class="book-summary-empty">SELECT A SEAT TO CONTINUE</span>
+                </div>
+                <button class="cta-book" id="cta-book" disabled>
+                    RESERVE
+                    <span class="cta-arrow">→</span>
+                </button>
+            </div>
+        </section>
+
+        <!--  VIEW: CONFIRMATION  -->
+        <section class="view view-confirm" id="view-confirm">
+            <div class="ticket-stub" id="ticket-stub"></div>
+            <div class="confirm-actions">
+                <button class="btn-secondary" data-action="home">BOOK ANOTHER FILM</button>
+            </div>
+        </section>
+        <!--  VIEW: MY TICKETS  -->
+        <section class="view view-mytickets" id="view-mytickets">
+            <button class="back-link" data-action="home">
+                <span class="back-arrow">←</span> ALL FILMS
+            </button>
+            <div class="section-rule">
+                <span class="section-rule-label">MY RESERVATIONS</span>
+            </div>
+            <div class="tickets-list" id="tickets-list">
+                <div class="empty-state">No reservations found.</div>
+            </div>
+        </section>
+
+        <!--  VIEW: AUTH  -->
+        <section class="view view-auth" id="view-auth">
+            <button class="back-link" data-action="home">
+                <span class="back-arrow">←</span> ALL FILMS
+            </button>
+            <div class="auth-container" style="max-width: 400px; margin: 2rem auto;">
+                <p class="kicker" id="auth-kicker">// MEMBERSHIP</p>
+                <h2 class="auth-title" id="auth-title" style="font-family: var(--serif); font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem; line-height: 1.1;">Access the Velvet Room</h2>
+                <form id="auth-form" class="auth-form">
+                    <label class="modal-field">
+                        <span class="modal-field-label">ACCOUNT NAME / EMAIL</span>
+                        <input type="text" id="auth-account" class="modal-input" placeholder="e.g. arsyam" autocomplete="off" spellcheck="false" required />
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-field-label">PASSWORD</span>
+                        <input type="password" id="auth-password" class="modal-input" placeholder="••••••••" required />
+                    </label>
+                    <div class="modal-actions" style="margin-top: 2rem; flex-direction: column; gap: 1rem;">
+                        <button type="submit" class="btn-primary" id="auth-submit" style="width: 100%; justify-content: center;">
+                            LOGIN <span class="cta-arrow">→</span>
+                        </button>
+                        <button type="button" class="btn-ghost" id="auth-toggle-btn" style="width: 100%;">
+                            NEED AN ACCOUNT? SIGN UP
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!--  VIEW: PROFILE  -->
+        <section class="view view-profile" id="view-profile">
+            <button class="back-link" data-action="home">
+                <span class="back-arrow">←</span> BACK
+            </button>
+            <div class="auth-container" style="max-width: 400px; margin: 2rem auto;">
+                <p class="kicker">// PROFILE</p>
+                <h2 class="auth-title" style="font-family: var(--serif); font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem; line-height: 1.1;">Account Settings</h2>
+                
+                <form id="profile-form" class="auth-form" style="margin-bottom: 2.5rem;">
+                    <label class="modal-field">
+                        <span class="modal-field-label">ACCOUNT NAME</span>
+                        <input type="text" id="profile-name" class="modal-input" disabled />
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-field-label">EMAIL ADDRESS</span>
+                        <input type="email" id="profile-email" class="modal-input" placeholder="Not set" />
+                    </label>
+                    <button type="submit" class="btn-primary" id="profile-submit" style="width: 100%; justify-content: center; margin-top: 1rem;">
+                        UPDATE PROFILE
+                    </button>
+                </form>
+
+                <div class="section-rule" style="margin: 2rem 0;"></div>
+
+                <form id="password-form" class="auth-form" style="margin-bottom: 2.5rem;">
+                    <label class="modal-field">
+                        <span class="modal-field-label">CURRENT PASSWORD</span>
+                        <input type="password" id="password-old" class="modal-input" required />
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-field-label">NEW PASSWORD</span>
+                        <input type="password" id="password-new" class="modal-input" required />
+                    </label>
+                    <button type="submit" class="btn-primary" id="password-submit" style="width: 100%; justify-content: center; margin-top: 1rem;">
+                        CHANGE PASSWORD
+                    </button>
+                </form>
+
+                <button type="button" class="btn-secondary" data-action="logout" style="width: 100%; color: var(--rust); border-color: var(--line-strong);">
+                    LOGOUT
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="colophon">
+        <span class="colophon-line">TICKETIN.DB</span>
+        <span class="colophon-dot">·</span>
+        <span class="colophon-line">A booking experiment</span>
+        <span class="colophon-dot">·</span>
+        <span class="colophon-line">Built on Express, MongoDB &amp; Redis</span>
+    </footer>
+
+    <!--  MODAL: USERNAME + CONFIRM  -->
+    <div class="modal" id="modal" aria-hidden="true">
+        <div class="modal-backdrop" data-action="close-modal"></div>
+        <div class="modal-card">
+            <p class="modal-kicker">// CONFIRM RESERVATION</p>
+            <h2 class="modal-title" id="modal-title">Hold this seat?</h2>
+            <p class="modal-subtitle" id="modal-subtitle"></p>
+
+            <div class="modal-actions">
+                <button class="btn-ghost" data-action="close-modal">CANCEL</button>
+                <button class="btn-primary" id="modal-confirm">
+                    CONFIRM &amp; PAY
+                    <span class="cta-arrow">→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!--  TOAST  -->
+    <div class="toast" id="toast" aria-hidden="true"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

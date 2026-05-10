@@ -2,39 +2,54 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Redis = require('ioredis');
 
+const http = require('http');
+const { Server } = require('socket.io');
+
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+const httpServer = http.createServer(app);
+const io = new Server(httpServer);
 
-// Connect to MongoDB
+app.set('io', io);
+
+app.use(express.json());
+app.use(express.static('public'));
+
+// Connect to MongoDB for our main data storage
 mongoose.connect('mongodb://127.0.0.1:27017/ticketin_db')
     .then(() => console.log('Successfully connected to MongoDB (Persistent Storage)'))
     .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
-// Connect to Redis
+// Set up Redis client for temporary seat locking
 const redis = new Redis({
     host: 'localhost',
     port: 6379,
 });
+app.set('redis', redis); // pass the redis instance to app so our routes can access it
+
 redis.on('connect', () => console.log('Successfully connected to Redis (In-Memory Lock)'));
 redis.on('error', (err) => console.error('Failed to connect to Redis:', err));
 
-// Basic route to test the server
-app.get('/', (req, res) => {
-    res.send('TicketIn.db Booking API is running!');
-});
-
-// Import and Use Routes
 const bookingRoutes = require('./routes/booking');
 const movieRoutes = require('./routes/movie');
 const showtimeRoutes = require('./routes/showtime');
+const authRoutes = require('./routes/auth');
 
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/showtimes', showtimeRoutes);
+app.use('/api/auth', authRoutes);
 
-// Start the Server
-app.listen(PORT, () => {
+io.on('connection', (socket) => {
+    socket.on('join_showtime', (showtimeId) => {
+        socket.join(`showtime_${showtimeId}`);
+    });
+    socket.on('leave_showtime', (showtimeId) => {
+        socket.leave(`showtime_${showtimeId}`);
+    });
+});
+
+httpServer.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
 });
