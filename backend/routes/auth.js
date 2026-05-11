@@ -46,13 +46,16 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     try {
-        const { accountName, password } = req.body;
+        const { accountName, email, identifier, password } = req.body;
+        const loginId = (identifier ?? accountName ?? email ?? '').trim();
 
-        if (!accountName || !password) {
-            return res.status(400).json({ error: 'Account name and password are required' });
+        if (!loginId || !password) {
+            return res.status(400).json({ error: 'Account name or email and password are required' });
         }
 
-        const user = await User.findOne({ accountName });
+        const user = await User.findOne({
+            $or: [{ accountName: loginId }, { email: loginId }]
+        });
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
