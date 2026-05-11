@@ -20,7 +20,7 @@ const genrePool = [
     'Action', 'Adventure', 'Animation', 'Comedy', 'Crime',
     'Documentary', 'Drama', 'Fantasy', 'Horror', 'Mystery',
     'Romance', 'Sci-Fi', 'Thriller', 'War', 'Musical',
-    'Western', 'Family', 'Biography', 'History', 'Sport', 'Slice of Life'
+    'Western', 'Family', 'Biography', 'History', 'Sport'
 ];
 
 const castPool = [

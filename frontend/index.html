@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TicketIn.db — A Velvet Room for Films</title>
+    <title>TicketIn.db - Abed n Co. </title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -26,7 +26,8 @@
                 style="font-family:var(--mono); font-size:0.8rem; color:var(--gold);">MY TICKETS</a>
             <a href="#" class="brand" data-action="auth" id="nav-login"
                 style="font-family:var(--mono); font-size:0.8rem; color:var(--cream);">LOGIN</a>
-            <a href="#" class="user-pill" id="user-pill" data-action="profile" style="display:none;" title="View Profile">
+            <a href="#" class="user-pill" id="user-pill" data-action="profile" style="display:none;"
+                title="View Profile">
                 <span class="user-pill-label">USER</span>
                 <span class="user-pill-id" id="user-id">— —</span>
             </a>
@@ -63,14 +64,8 @@
 
             <div class="search-bar">
                 <span class="search-icon" aria-hidden="true">⌕</span>
-                <input
-                    type="search"
-                    id="movie-search"
-                    class="search-input"
-                    placeholder="SEARCH FILMS BY TITLE…"
-                    autocomplete="off"
-                    spellcheck="false"
-                />
+                <input type="search" id="movie-search" class="search-input" placeholder="SEARCH FILMS BY TITLE…"
+                    autocomplete="off" spellcheck="false" />
                 <button type="button" class="search-clear" id="search-clear" aria-label="Clear search">×</button>
             </div>
 
@@ -182,18 +177,22 @@
             </button>
             <div class="auth-container" style="max-width: 400px; margin: 2rem auto;">
                 <p class="kicker" id="auth-kicker">MEMBERSHIP</p>
-                <h2 class="auth-title" id="auth-title" style="font-family: var(--serif); font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem; line-height: 1.1;">Access the Velvet Room</h2>
+                <h2 class="auth-title" id="auth-title"
+                    style="font-family: var(--serif); font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem; line-height: 1.1;">
+                    Access the Velvet Room</h2>
                 <form id="auth-form" class="auth-form">
                     <label class="modal-field">
                         <span class="modal-field-label">ACCOUNT NAME / EMAIL</span>
-                        <input type="text" id="auth-account" class="modal-input" placeholder="username" autocomplete="off" spellcheck="false" required />
+                        <input type="text" id="auth-account" class="modal-input" placeholder="username"
+                            autocomplete="off" spellcheck="false" required />
                     </label>
                     <label class="modal-field">
                         <span class="modal-field-label">PASSWORD</span>
                         <input type="password" id="auth-password" class="modal-input" placeholder="••••••••" required />
                     </label>
                     <div class="modal-actions" style="margin-top: 2rem; flex-direction: column; gap: 1rem;">
-                        <button type="submit" class="btn-primary" id="auth-submit" style="width: 100%; justify-content: center;">
+                        <button type="submit" class="btn-primary" id="auth-submit"
+                            style="width: 100%; justify-content: center;">
                             LOGIN <span class="cta-arrow">→</span>
                         </button>
                         <button type="button" class="btn-ghost" id="auth-toggle-btn" style="width: 100%;">
@@ -211,8 +210,10 @@
             </button>
             <div class="auth-container" style="max-width: 400px; margin: 2rem auto;">
                 <p class="kicker">PROFILE</p>
-                <h2 class="auth-title" style="font-family: var(--serif); font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem; line-height: 1.1;">Account Settings</h2>
-                
+                <h2 class="auth-title"
+                    style="font-family: var(--serif); font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem; line-height: 1.1;">
+                    Account Settings</h2>
+
                 <form id="profile-form" class="auth-form" style="margin-bottom: 2.5rem;">
                     <label class="modal-field">
                         <span class="modal-field-label">ACCOUNT NAME</span>
@@ -222,7 +223,8 @@
                         <span class="modal-field-label">EMAIL ADDRESS</span>
                         <input type="email" id="profile-email" class="modal-input" placeholder="Not set" />
                     </label>
-                    <button type="submit" class="btn-primary" id="profile-submit" style="width: 100%; justify-content: center; margin-top: 1rem;">
+                    <button type="submit" class="btn-primary" id="profile-submit"
+                        style="width: 100%; justify-content: center; margin-top: 1rem;">
                         UPDATE PROFILE
                     </button>
                 </form>
@@ -238,12 +240,14 @@
                         <span class="modal-field-label">NEW PASSWORD</span>
                         <input type="password" id="password-new" class="modal-input" required />
                     </label>
-                    <button type="submit" class="btn-primary" id="password-submit" style="width: 100%; justify-content: center; margin-top: 1rem;">
+                    <button type="submit" class="btn-primary" id="password-submit"
+                        style="width: 100%; justify-content: center; margin-top: 1rem;">
                         CHANGE PASSWORD
                     </button>
                 </form>
 
-                <button type="button" class="btn-secondary" data-action="logout" style="width: 100%; color: var(--rust); border-color: var(--line-strong);">
+                <button type="button" class="btn-secondary" data-action="logout"
+                    style="width: 100%; color: var(--rust); border-color: var(--line-strong);">
                     LOGOUT
                 </button>
             </div>
@@ -290,20 +294,24 @@
             <form id="payment-form" class="payment-form">
                 <label class="modal-field">
                     <span class="modal-field-label">CARDHOLDER NAME</span>
-                    <input type="text" id="pay-name" class="modal-input" placeholder="JANE APPLESEED" autocomplete="cc-name" required />
+                    <input type="text" id="pay-name" class="modal-input" placeholder="JANE APPLESEED"
+                        autocomplete="cc-name" required />
                 </label>
                 <label class="modal-field">
                     <span class="modal-field-label">CARD NUMBER</span>
-                    <input type="text" id="pay-card" class="modal-input" placeholder="1234 5678 9012 3456" inputmode="numeric" autocomplete="cc-number" maxlength="19" required />
+                    <input type="text" id="pay-card" class="modal-input" placeholder="1234 5678 9012 3456"
+                        inputmode="numeric" autocomplete="cc-number" maxlength="19" required />
                 </label>
                 <div class="payment-row">
                     <label class="modal-field">
                         <span class="modal-field-label">EXPIRY (MM/YY)</span>
-                        <input type="text" id="pay-expiry" class="modal-input" placeholder="MM/YY" inputmode="numeric" autocomplete="cc-exp" maxlength="5" required />
+                        <input type="text" id="pay-expiry" class="modal-input" placeholder="MM/YY" inputmode="numeric"
+                            autocomplete="cc-exp" maxlength="5" required />
                     </label>
                     <label class="modal-field">
                         <span class="modal-field-label">CVV</span>
-                        <input type="password" id="pay-cvv" class="modal-input" placeholder="•••" inputmode="numeric" autocomplete="cc-csc" maxlength="4" required />
+                        <input type="password" id="pay-cvv" class="modal-input" placeholder="•••" inputmode="numeric"
+                            autocomplete="cc-csc" maxlength="4" required />
                     </label>
                 </div>
                 <div class="modal-actions">

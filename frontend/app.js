@@ -138,7 +138,7 @@ function renderUserPill() {
    ROUTING
     */
 
-function showView(viewId) {
+function showView(viewId, pushState = true) {
     $$('.view').forEach(v => v.classList.remove('is-active'));
     $(`#${viewId}`).classList.add('is-active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -146,6 +146,10 @@ function showView(viewId) {
     // Leave previous showtime room if leaving seats view
     if (viewId !== 'view-seats' && state.selectedShowtime && socket) {
         socket.emit('leave_showtime', state.selectedShowtime._id);
+    }
+
+    if (pushState) {
+        history.pushState({ viewId }, '', `#${viewId}`);
     }
 }
 
@@ -1254,6 +1258,17 @@ function bindSearch() {
 
     updateClearVisibility();
 }
+
+window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.viewId) {
+        showView(e.state.viewId, false);
+    } else {
+        showView('view-movies', false);
+    }
+});
+
+// Push initial state so the first back button click works correctly
+history.replaceState({ viewId: 'view-movies' }, '', '#view-movies');
 
 loadUser();
 loadMovies();
