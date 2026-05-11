@@ -1,9 +1,10 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const Movie = require('./models/Movie');
 const Showtime = require('./models/Showtime');
 const Cinema = require('./models/Cinema');
 
-const MONGO_URI = 'mongodb://127.0.0.1:27017/ticketin_db';
+const MONGO_URI = process.env.MONGO_URI;
 
 function pickRandom(arr, min = 1, max = 3) {
     const count = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -19,7 +20,7 @@ const genrePool = [
     'Action', 'Adventure', 'Animation', 'Comedy', 'Crime',
     'Documentary', 'Drama', 'Fantasy', 'Horror', 'Mystery',
     'Romance', 'Sci-Fi', 'Thriller', 'War', 'Musical',
-    'Western', 'Family', 'Biography', 'History', 'Sport', 'chudai'
+    'Western', 'Family', 'Biography', 'History', 'Sport', 'Slice of Life'
 ];
 
 const castPool = [

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const Redis = require('ioredis');
@@ -7,30 +8,29 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 const httpServer = http.createServer(app);
 const io = new Server(httpServer);
 
-app.set('io', io);
+app.set('io', io); // socket.io instance shared with routes for real-time seat updates
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
-// Connect to MongoDB for our main data storage
-mongoose.connect('mongodb://127.0.0.1:27017/ticketin_db')
-    .then(() => console.log('Successfully connected to MongoDB (Persistent Storage)'))
-    .catch((err) => console.error('Failed to connect to MongoDB:', err));
+// mongo — persistent store (movies, showtimes, bookings, users)
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('Connected to MongoDB Atlas'))
+    .catch((err) => console.error('MongoDB connection failed:', err));
 
-// Set up Redis client for temporary seat locking
-const redis = new Redis({
-    host: 'localhost',
-    port: 6379,
+// redis — seat lock store (SET NX with TTL, TLS required for Upstash)
+const redis = new Redis(process.env.REDIS_URL, {
+    tls: { rejectUnauthorized: false },
 });
-app.set('redis', redis); // pass the redis instance to app so our routes can access it
+app.set('redis', redis);
 
-redis.on('connect', () => console.log('Successfully connected to Redis (In-Memory Lock)'));
-redis.on('error', (err) => console.error('Failed to connect to Redis:', err));
+redis.on('connect', () => console.log('Connected to Upstash Redis'));
+redis.on('error', (err) => console.error('Redis connection failed:', err));
 
 const bookingRoutes = require('./routes/booking');
 const movieRoutes = require('./routes/movie');

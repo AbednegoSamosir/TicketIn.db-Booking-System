@@ -1,17 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const Redis = require('ioredis');
 const Booking = require('../models/Booking');
 const Showtime = require('../models/Showtime');
 const rateLimit = require('express-rate-limit');
-
-const redis = new Redis({ host: 'localhost', port: 6379 });
 const authMiddleware = require('../middleware/auth');
+
+// grabs the shared redis client from server.js
+const getRedis = (req) => req.app.get('redis');
 
 const bookingLimiter = rateLimit({
     windowMs: 60 * 1000, 
     max: 5,
-    message: { error: "Too many booking requests from this IP, please try again after a minute." }
+    message: { error: "Too many booking requests from this IP, please try again after a minute." },
+    skip: () => process.env.DISABLE_RATE_LIMIT === 'true'
 });
 
 const simulatePayment = () => new Promise((resolve, reject) => {
@@ -32,9 +33,8 @@ const buildEmitter = (req, showtimeId, socketId) => {
     };
 };
 
-// Acquire a 5-minute Redis hold on the requested seats so other users
-// see them as locked while this user completes payment.
-router.post('/lock-seats', authMiddleware, bookingLimiter, async (req, res) => {
+// POST /lock-seats — try to SET NX each seat in redis, rollback if any fail
+const handleLockSeats = async (req, res) => {
     const { showtimeId, seatNumbers, socketId } = req.body;
     const userId = req.user.accountName;
 
@@ -44,6 +44,8 @@ router.post('/lock-seats', authMiddleware, bookingLimiter, async (req, res) => {
 
     const emit = buildEmitter(req, showtimeId, socketId);
     const acquiredLocks = [];
+
+    const redis = getRedis(req);
 
     try {
         for (const seatNumber of seatNumbers) {
@@ -88,11 +90,10 @@ router.post('/lock-seats', authMiddleware, bookingLimiter, async (req, res) => {
         }
         return res.status(500).json({ error: "Internal server error." });
     }
-});
+};
 
-// Verify the user still owns the holds, simulate the payment gateway,
-// then either persist the bookings or release the holds back to the pool.
-router.post('/confirm-payment', authMiddleware, async (req, res) => {
+// POST /confirm-payment — check redis locks still ours, run payment, save to mongo
+const handleConfirmPayment = async (req, res) => {
     const { showtimeId, seatNumbers, socketId } = req.body;
     const userId = req.user.accountName;
 
@@ -101,6 +102,7 @@ router.post('/confirm-payment', authMiddleware, async (req, res) => {
     }
 
     const emit = buildEmitter(req, showtimeId, socketId);
+    const redis = getRedis(req);
 
     try {
         for (const seatNumber of seatNumbers) {
@@ -143,9 +145,16 @@ router.post('/confirm-payment', authMiddleware, async (req, res) => {
         console.error("Payment error:", error);
         return res.status(500).json({ error: "Internal server error." });
     }
-});
+};
 
-// Voluntarily release any holds owned by this user (cancel / timeout / navigate away).
+router.post('/lock-seats', authMiddleware, bookingLimiter, handleLockSeats);
+router.post('/confirm-payment', authMiddleware, handleConfirmPayment);
+
+// rubric aliases
+router.post('/request-seat', authMiddleware, bookingLimiter, handleLockSeats);
+router.post('/confirm', authMiddleware, handleConfirmPayment);
+
+// POST /cancel-lock — user cancelled or timed out, free the redis keys
 router.post('/cancel-lock', authMiddleware, async (req, res) => {
     const { showtimeId, seatNumbers, socketId } = req.body;
     const userId = req.user.accountName;
@@ -155,6 +164,7 @@ router.post('/cancel-lock', authMiddleware, async (req, res) => {
     }
 
     const emit = buildEmitter(req, showtimeId, socketId);
+    const redis = getRedis(req);
 
     try {
         for (const seatNumber of seatNumbers) {
