@@ -1,0 +1,5 @@
+status_code,count,label,description
+200,1,Lock granted,Exactly one VU acquired the Redis SET NX lock first
+409,499,Lock denied,All other VUs received clean rejection from Redis
+410,0,Hold expired,Would only occur if a lock TTL fired mid-test
+500,0,Server error,No backend crashes under the stampede

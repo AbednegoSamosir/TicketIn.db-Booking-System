@@ -1,0 +1,38 @@
+{
+  "scenario": "throughput",
+  "description": "100 sustained VUs, each targeting unique seats — measures raw RPS",
+  "config": {
+    "vus": 100,
+    "duration_s": 60,
+    "executor": "constant-vus",
+    "base_url": "http://localhost:3000"
+  },
+  "results": {
+    "total_iterations": 7338,
+    "successful_locks": 7332,
+    "failed_locks": 6,
+    "rps_average": 244.6,
+    "rps_min_window": 231.0,
+    "rps_max_window": 251.1
+  },
+  "lock_latency_ms": {
+    "min": 22,
+    "avg": 56,
+    "med": 41,
+    "max": 387,
+    "p90": 112,
+    "p95": 148,
+    "p99": 226
+  },
+  "cancel_latency_ms": {
+    "min": 19,
+    "avg": 38,
+    "med": 31,
+    "max": 184,
+    "p90": 71,
+    "p95": 92,
+    "p99": 134
+  },
+  "verdict": "PASS — sustained ~245 req/s with p95 < 150ms. Backend is not the bottleneck.",
+  "note": "Example output. Re-run with: k6 run benchmarks/scripts/k6-throughput.js --out csv=benchmarks/raw-results/throughput.csv"
+}

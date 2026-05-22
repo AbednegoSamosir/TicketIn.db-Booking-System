@@ -161,3 +161,7 @@ Expected outcome: exactly 1 request returns `200 OK`, the remaining 499 return `
 | **Fahreza** | Engine & Benchmarking |
 | **Bijar** | Database Architecture & Data Seeding |
 | **Abed** | UI/UX & Documentation |
+
+## AI Disclosure
+
+The frontend visual design (layout, typography, colour palette, CSS) was developed with the help of an AI assistant (Claude). The team reviewed, adjusted, and integrated the generated styling. All backend logic, data modelling, and database integration were written by team members.

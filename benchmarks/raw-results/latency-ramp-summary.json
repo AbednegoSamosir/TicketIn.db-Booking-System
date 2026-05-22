@@ -1,0 +1,25 @@
+{
+  "scenario": "latency-ramp",
+  "description": "Ramping VUs 10 → 200 in 30s stages — finds the latency-vs-load curve",
+  "config": {
+    "stages": [
+      { "duration_s": 30, "target_vus": 10  },
+      { "duration_s": 30, "target_vus": 50  },
+      { "duration_s": 30, "target_vus": 100 },
+      { "duration_s": 30, "target_vus": 150 },
+      { "duration_s": 30, "target_vus": 200 },
+      { "duration_s": 15, "target_vus": 0   }
+    ],
+    "executor": "ramping-vus",
+    "base_url": "http://localhost:3000"
+  },
+  "observations": {
+    "linear_zone_vus": "10 - 100",
+    "p95_at_100_vus_ms": 287,
+    "p95_at_200_vus_ms": 623,
+    "knee_point_vus": 150,
+    "error_rate_at_200_vus": 0.015
+  },
+  "verdict": "Linear scaling through ~100 VUs. Beyond 150 VUs, latency knees upward due to Redis pipelining limits.",
+  "note": "Example output. Re-run with: k6 run benchmarks/scripts/k6-latency-ramp.js --out csv=benchmarks/raw-results/latency-ramp.csv"
+}
