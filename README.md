@@ -4,7 +4,9 @@ A cinema ticket booking system built to handle high-concurrency seat reservation
 
 MongoDB Atlas stores the permanent data — movies, showtimes, cinemas, users, and paid bookings. Upstash Redis handles the temporary part: a distributed `SET NX` lock with a 5-minute TTL that acts as a gatekeeper before anything touches the database.
 
-![Architecture](docs/architecture.png)
+Detailed design documentation, UML diagrams, and database schemas are available in the [/docs](./docs) directory:
+*   [UML Diagrams & Data Models](./docs/data_models.md) (Flowchart, ERD, Use Case, Class Diagram)
+*   [Architectural Design Decisions](./docs/design_decisions.md) (Problem statement, NoSQL trade-offs, and consistency strategy)
 
 ## How It Works
 
@@ -117,6 +119,9 @@ TicketIn.db-Booking-System/
 ├── Dockerfile                # Node.js 20 Alpine image
 ├── docker-compose.yml        # Backend container (cloud DBs, no local containers)
 ├── README.md
+├── docs/                     # Design documentation, schemas, and UML diagrams
+│   ├── data_models.md        # Schemas & 4 UML Diagrams (Flowchart, ERD, Use Case, Class)
+│   └── design_decisions.md   # Architectural Motivation, NoSQL choices & Trade-offs
 ├── backend/
 │   ├── .env                  # Cloud credentials (git-ignored)
 │   ├── server.js             # Entry point — Express, Mongoose, ioredis, Socket.IO
