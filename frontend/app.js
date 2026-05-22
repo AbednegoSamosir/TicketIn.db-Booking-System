@@ -2,15 +2,21 @@
    TICKETIN.DB — Frontend logic
    */
 
+const API_BASE = (window.TICKETIN_CONFIG && window.TICKETIN_CONFIG.API_BASE) || '';
+
 const API = {
-    movies: '/api/movies',
-    cinemas: '/api/cinemas',
-    showtimes: (id) => `/api/showtimes/${id}`,
-    seats: (id) => `/api/showtimes/${id}/seats`,
-    lockSeats: '/api/bookings/lock-seats',
-    confirmPayment: '/api/bookings/confirm-payment',
-    cancelLock: '/api/bookings/cancel-lock',
-    tickets: () => `/api/bookings/my-tickets`
+    movies: `${API_BASE}/api/movies`,
+    cinemas: `${API_BASE}/api/cinemas`,
+    showtimes: (id) => `${API_BASE}/api/showtimes/${id}`,
+    seats: (id) => `${API_BASE}/api/showtimes/${id}/seats`,
+    lockSeats: `${API_BASE}/api/bookings/lock-seats`,
+    confirmPayment: `${API_BASE}/api/bookings/confirm-payment`,
+    cancelLock: `${API_BASE}/api/bookings/cancel-lock`,
+    tickets: () => `${API_BASE}/api/bookings/my-tickets`,
+    authLogin: `${API_BASE}/api/auth/login`,
+    authRegister: `${API_BASE}/api/auth/register`,
+    authProfile: `${API_BASE}/api/auth/profile`,
+    authPassword: `${API_BASE}/api/auth/password`
 };
 
 const state = {
@@ -29,7 +35,7 @@ const state = {
     activeCinemaId: ''
 };
 
-const socket = typeof io !== 'undefined' ? io() : null;
+const socket = typeof io !== 'undefined' ? io(API_BASE || undefined) : null;
 
 /* 
    UTILITIES
@@ -1100,7 +1106,7 @@ authForm.addEventListener('submit', async (e) => {
     authSubmitBtn.disabled = true;
     authSubmitBtn.innerHTML = `PROCESSING<span class="cta-arrow">…</span>`;
 
-    const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+    const endpoint = isLoginMode ? API.authLogin : API.authRegister;
 
     try {
         const res = await fetch(endpoint, {
@@ -1143,7 +1149,7 @@ authForm.addEventListener('submit', async (e) => {
 async function openProfile() {
     showView('view-profile');
     try {
-        const res = await fetch('/api/auth/profile', {
+        const res = await fetch(API.authProfile, {
             headers: { 'Authorization': `Bearer ${state.token}` }
         });
         if (res.ok) {
@@ -1171,7 +1177,7 @@ $('#profile-form').addEventListener('submit', async (e) => {
     btn.disabled = true;
     
     try {
-        const res = await fetch('/api/auth/profile', {
+        const res = await fetch(API.authProfile, {
             method: 'PUT',
             headers: { 
                 'Content-Type': 'application/json',
@@ -1197,7 +1203,7 @@ $('#password-form').addEventListener('submit', async (e) => {
     btn.disabled = true;
 
     try {
-        const res = await fetch('/api/auth/password', {
+        const res = await fetch(API.authPassword, {
             method: 'PUT',
             headers: { 
                 'Content-Type': 'application/json',

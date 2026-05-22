@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const Redis = require('ioredis');
+const cors = require('cors');
 const path = require('path');
 
 const http = require('http');
@@ -10,11 +11,23 @@ const { Server } = require('socket.io');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS — comma-separated list of allowed origins, or "*" for any.
+// Set CORS_ORIGIN on the backend host to your Vercel URL once it's deployed.
+const corsOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+    : '*';
+
 const httpServer = http.createServer(app);
-const io = new Server(httpServer);
+const io = new Server(httpServer, {
+    cors: { origin: corsOrigins, credentials: true }
+});
 
 app.set('io', io); // socket.io instance shared with routes for real-time seat updates
 
+// Railway/Render/Fly all sit behind a proxy — trust it so rate-limit sees real IPs.
+app.set('trust proxy', 1);
+
+app.use(cors({ origin: corsOrigins, credentials: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
